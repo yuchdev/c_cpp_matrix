@@ -35,8 +35,7 @@ def operation_key(name):
     # cpp_expr_AT_mul_B_128x128 -> (expr_AT_mul_B, 128x128)
     parts = name.split("_")
     if parts[0] == "c":
-        op = "_".join(parts[1:-1]) if parts[-1].endswith("x" + parts[-1].split("x")[-1]) else "_".join(parts[1:])
-        # last part is NxN
+        # last part is NxN size, everything in between is the operation name
         size = parts[-1]
         op   = "_".join(parts[1:-1])
         return op, size, "c"

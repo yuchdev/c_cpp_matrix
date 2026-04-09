@@ -49,13 +49,12 @@ static void test_transpose_vs_c(int N) {
     Eigen::MatrixXd A(N,N);
     fill_rand(A, 1);
 
-    // C++
+    // C++: compute transpose of A
     Eigen::MatrixXd Et = A.transpose();
     Matrix et = eigen_to_c(Et);
 
-    // C
+    // C: populate from the same A (already filled above), then transpose
     Matrix ca = matrix_create(N,N);
-    fill_rand(A, 1); // re-fill same
     for (int r = 0; r < N; ++r) for (int c = 0; c < N; ++c)
         matrix_set(&ca, r, c, A(r,c));
     Matrix ct = matrix_create(N,N);
