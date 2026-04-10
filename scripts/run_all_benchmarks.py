@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import sys
 import json
 import math
 import statistics
@@ -151,7 +152,7 @@ def write_outputs(rows: List[Dict[str, object]], output_dir: Path) -> None:
         json.dump(rows, f, indent=2)
 
 
-def main() -> None:
+def main():
     parser = argparse.ArgumentParser(description="Run all repository benchmarks and export tabular results")
     parser.add_argument("--build-dir", default="build", help="CMake build directory")
     parser.add_argument("--output-dir", default="benchmark_results", help="Output directory for CSV/JSON artifacts")
@@ -177,6 +178,8 @@ def main() -> None:
     print(f"Summary: {output_dir / 'summary.csv'}")
     print(f"JSON: {output_dir / 'runs.json'}")
 
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
