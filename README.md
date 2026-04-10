@@ -66,17 +66,14 @@ python3 matrix_perf_compare/scripts/run_all.py --build-dir build/matrix_perf_com
 Use the repository-level script to run **both generic and matrix** benchmarks and write tabular outputs suitable for plotting.
 
 ```bash
-python3 scripts/run_all_benchmarks.py \
-  --build-dir build \
-  --output-dir benchmark_results \
-  --repeats 5
+python3 scripts/run_all_benchmarks.py --build-dir build --output-dir benchmark_results --repeats 5
 ```
 
 Outputs:
 
-- `benchmark_results/runs.csv` — long-format per-run timing table
-- `benchmark_results/summary.csv` — grouped summary (mean/min/max/stdev)
-- `benchmark_results/runs.json` — same per-run data in JSON
+- `benchmark_results/runs.csv` - long-format per-run timing table
+- `benchmark_results/summary.csv` - grouped summary (mean/min/max/stdev)
+- `benchmark_results/runs.json` - same per-run data in JSON
 
 ---
 
