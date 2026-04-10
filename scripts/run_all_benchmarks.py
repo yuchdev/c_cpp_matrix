@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Dict, List
 
 
+#: Generic benchmark definitions as ``(group, language, executable_name)`` tuples.
 GENERIC_BENCHMARKS = [
     ("a", "c", "a_qsort_c"),
     ("a", "cpp", "a_std_sort_cpp"),
@@ -28,6 +29,7 @@ GENERIC_BENCHMARKS = [
     ("e", "cpp", "e_constexpr_table_cpp"),
 ]
 
+#: Matrix benchmark definitions as ``(language, executable_name, raw_csv_filename)`` tuples.
 MATRIX_BENCHMARKS = [
     ("c", "c_matrix_bench", "c_results.csv"),
     ("cpp", "cpp_matrix_bench", "cpp_results.csv"),
@@ -35,6 +37,16 @@ MATRIX_BENCHMARKS = [
 
 
 def find_executable(build_dir: Path, name: str) -> Path:
+    """Locate an executable under the configured build directory.
+
+    The lookup checks common subdirectories first, then performs a recursive
+    wildcard search as a fallback.
+
+    :param build_dir: Root build directory that contains benchmark artifacts.
+    :param name: Executable base name to resolve.
+    :returns: Absolute or relative path to the matching executable file.
+    :raises FileNotFoundError: If no executable matching ``name`` is found.
+    """
     candidates = [
         build_dir / "generic_perf_compare" / "benchmarks" / name,
         build_dir / "matrix_perf_compare" / "project" / name,
@@ -54,12 +66,27 @@ def find_executable(build_dir: Path, name: str) -> Path:
 
 
 def run_cmd(cmd: List[str]) -> None:
+    """Run a command and raise if it fails.
+
+    :param cmd: Command vector passed directly to :func:`subprocess.run`.
+    :returns: ``None``.
+    :raises RuntimeError: If the command exits with a non-zero status.
+    """
     result = subprocess.run(cmd, check=False)
     if result.returncode != 0:
         raise RuntimeError(f"Command failed with code {result.returncode}: {' '.join(cmd)}")
 
 
 def run_generic(build_dir: Path, repeats: int, rows: List[Dict[str, object]]) -> None:
+    """Execute generic benchmark binaries and collect wall-clock timings.
+
+    :param build_dir: Build directory where benchmark executables are located.
+    :param repeats: Number of timing runs per benchmark executable.
+    :param rows: Mutable row collection where run records are appended.
+    :returns: ``None``.
+    :raises FileNotFoundError: If a benchmark executable cannot be located.
+    :raises RuntimeError: If a benchmark process is terminated by a signal.
+    """
     for group, lang, exe_name in GENERIC_BENCHMARKS:
         exe = find_executable(build_dir, exe_name)
         for run_index in range(1, repeats + 1):
@@ -83,6 +110,17 @@ def run_generic(build_dir: Path, repeats: int, rows: List[Dict[str, object]]) ->
 
 
 def run_matrix(build_dir: Path, output_dir: Path, rows: List[Dict[str, object]]) -> None:
+    """Execute matrix benchmarks and ingest their generated CSV outputs.
+
+    :param build_dir: Build directory where matrix benchmark executables exist.
+    :param output_dir: Parent output directory for raw and summarized artifacts.
+    :param rows: Mutable row collection where parsed benchmark data is appended.
+    :returns: ``None``.
+    :raises FileNotFoundError: If a matrix benchmark executable is not found.
+    :raises RuntimeError: If a matrix benchmark process fails.
+    :raises KeyError: If expected CSV columns are missing from benchmark output.
+    :raises ValueError: If ``avg_ns`` cannot be converted to ``float``.
+    """
     raw_dir = output_dir / "matrix_raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
 
@@ -109,6 +147,15 @@ def run_matrix(build_dir: Path, output_dir: Path, rows: List[Dict[str, object]])
 
 
 def write_outputs(rows: List[Dict[str, object]], output_dir: Path) -> None:
+    """Write benchmark run rows and aggregate summaries to disk.
+
+    :param rows: Flat list of benchmark sample rows.
+    :param output_dir: Destination directory for ``runs.csv``, ``summary.csv``,
+        and ``runs.json``.
+    :returns: ``None``.
+    :raises OSError: If output files or directories cannot be written.
+    :raises ValueError: If statistics functions receive invalid numeric inputs.
+    """
     output_dir.mkdir(parents=True, exist_ok=True)
     runs_csv = output_dir / "runs.csv"
     summary_csv = output_dir / "summary.csv"
@@ -152,7 +199,15 @@ def write_outputs(rows: List[Dict[str, object]], output_dir: Path) -> None:
         json.dump(rows, f, indent=2)
 
 
-def main():
+def main() -> int:
+    """Parse CLI arguments, run selected benchmark suites, and export results.
+
+    :returns: Process exit code ``0`` on success.
+    :raises ValueError: If ``--repeats`` is less than ``1``.
+    :raises FileNotFoundError: If required benchmark executables are missing.
+    :raises RuntimeError: If a benchmark subprocess fails.
+    :raises OSError: If output artifacts cannot be written.
+    """
     parser = argparse.ArgumentParser(description="Run all repository benchmarks and export tabular results")
     parser.add_argument("--build-dir", default="build", help="CMake build directory")
     parser.add_argument("--output-dir", default="benchmark_results", help="Output directory for CSV/JSON artifacts")
